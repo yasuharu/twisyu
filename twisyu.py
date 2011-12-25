@@ -67,8 +67,8 @@ if len(argvs) != 2:
 
 # define each URL.
 FIND_WORD  = argvs[1];
-SEARCH_URL = 'http://search.twitter.com/search.json?q=' + urllib.quote(FIND_WORD);
-LOOKUP_URL = 'http://api.twitter.com/1/users/lookup.json?rpp=' + str(SEARCH_WORD_NUM) + '&screen_name=';
+SEARCH_URL = 'http://search.twitter.com/search.json?rpp=' + str(SEARCH_WORD_NUM) + '&q=' + urllib.quote(FIND_WORD);
+LOOKUP_URL = 'http://api.twitter.com/1/users/lookup.json?screen_name=';
 
 history    = get_history();
 users      = gather_user_from_history(history);
