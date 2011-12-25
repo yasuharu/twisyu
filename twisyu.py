@@ -10,19 +10,12 @@ import urllib
 import sys
 
 # @brief 検索結果の個数を指定します
-SEARCH_WORD_NUM = 100;
+SEARCH_RESULT_NUM = 100;
 
-# @brief get user description
-# @ret dictionary of description.
-def get_users_description(users):
-	str_users = "";
-	for u in users:
-		str_users += u + ",";
-
-	req = urllib2.Request(LOOKUP_URL + str_users);
+def get_users_description_divide(str_users, url, users_desc):
+	req = urllib2.Request(url + str_users);
 	con = urllib2.urlopen(req);
 
-	users_desc = {};
 	for line in con:
 		data = simplejson.loads(line);
 
@@ -32,10 +25,30 @@ def get_users_description(users):
 
 	return users_desc;
 
+# @brief get user description
+# @ret dictionary of description.
+def get_users_description(users, url):
+	users_desc = {};
+	str_users  = "";
+	i          = 0;
+	for u in users:
+		str_users += u + ",";
+		i = i + 1;
+
+		if i == 100:
+			get_users_description_divide(str_users, url, users_desc);
+			i = 0;
+			str_users = "";
+
+	if i > 0:
+		get_users_description_divide(str_users, url, users_desc);
+
+	return users_desc;
+
 # @brief get dictionary of dedescription.
 # @ret history list [[screen_name, text]]
-def get_history():
-	req = urllib2.Request(SEARCH_URL);
+def get_history(url):
+	req = urllib2.Request(url);
 	con = urllib2.urlopen(req);
 
 	ret = [];
@@ -66,15 +79,19 @@ if len(argvs) != 2:
 	quit();
 
 # define each URL.
-FIND_WORD  = argvs[1];
-SEARCH_URL = 'http://search.twitter.com/search.json?rpp=' + str(SEARCH_WORD_NUM) + '&q=' + urllib.quote(FIND_WORD);
-LOOKUP_URL = 'http://api.twitter.com/1/users/lookup.json?screen_name=';
+search_word     = argvs[1];
+search_url_base = 'http://search.twitter.com/search.json?rpp=' + str(SEARCH_RESULT_NUM) + '&q=' + urllib.quote(search_word);
+user_lookup_url = 'http://api.twitter.com/1/users/lookup.json?screen_name=';
 
-history    = get_history();
-users      = gather_user_from_history(history);
-users_desc = get_users_description(users);
+historys = [];
+for i in range(10):
+	history = get_history(search_url_base + "&page=" + str(i + 1));
+	historys.extend(history);
 
-for h in history:
+users      = gather_user_from_history(historys);
+users_desc = get_users_description(users, user_lookup_url);
+
+for h in historys:
 	user        = h[0];
 	text        = h[1];
 	date        = h[2];
